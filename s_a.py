@@ -140,8 +140,8 @@ def propose_move_numba(board_p, board_r):
 # Sauvegarde CSV
 # ==============================
 def save_board_csv(board_p, board_r, seed):
-    os.makedirs("soluce", exist_ok=True)  # Crée le dossier s'il n'existe pas (redondant mais sûr)
-    filename = f"soluce/best_eternity2_solution_{seed}.csv"
+    os.makedirs("soluces", exist_ok=True)  # Crée le dossier s'il n'existe pas (redondant mais sûr)
+    filename = f"soluces/best_eternity2_solution_{seed}.csv"
     with open(filename,'w') as f:
         for i in range(SIZE):
             for j in range(SIZE):
