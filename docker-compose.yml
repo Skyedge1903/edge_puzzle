@@ -1,0 +1,14 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: always
+    networks:
+      - globalNetwork
+
+networks:
+  globalNetwork:
+    external: true
