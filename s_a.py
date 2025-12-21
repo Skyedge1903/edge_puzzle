@@ -139,9 +139,9 @@ def propose_move_numba(board_p, board_r):
 # ==============================
 # Sauvegarde CSV
 # ==============================
-def save_board_csv(board_p, board_r, seed):
-    os.makedirs("soluces", exist_ok=True)  # Crée le dossier s'il n'existe pas (redondant mais sûr)
-    filename = f"soluces/best_eternity2_solution_{seed}.csv"
+def save_board_csv(board_p, board_r, score):
+    os.makedirs("solutions", exist_ok=True)  # Crée le dossier s'il n'existe pas
+    filename = f"solutions/partial_solution_{score}.csv"
     with open(filename,'w') as f:
         for i in range(SIZE):
             for j in range(SIZE):
@@ -192,7 +192,7 @@ def simulated_annealing_csv(seed, t_rot, N, global_best, global_lock):
                 best_p, best_r = board_p.copy(), board_r.copy()
                 best_score = current_score
                 steps_without_improv = 0
-                save_board_csv(best_p, best_r, seed)
+                save_board_csv(best_p, best_r, current_score)
 
                 # Mise à jour du meilleur global
                 with global_lock:

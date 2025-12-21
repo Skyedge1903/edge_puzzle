@@ -32,7 +32,7 @@ Le solveur est conçu pour fonctionner avec le viewer interactif du repository [
 
 Pour afficher une solution générée :
 ```bash
-python play.py -conf data/eternity2/eternity2_256_1.csv -hints soluces/best_eternity2_solution_X.csv
+python play.py -conf data/eternity2/eternity2_256_1.csv -hints solutions/partial_solution_X.csv
 ```
 (Remplacez X par le numéro de seed de la solution souhaitée.)
 
