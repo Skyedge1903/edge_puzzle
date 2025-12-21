@@ -1,10 +1,11 @@
+import json
 import os
-
 import numpy as np
 import pandas as pd
 import multiprocessing
 from numba import njit
 import time
+import subprocess
 
 # ==============================
 # Classe couleurs ANSI
@@ -35,6 +36,7 @@ MAX_STEPS_WITHOUT_IMPROV = 30 * 10000
 BOOST_MAX = 0.55
 BOOST_MIN = 0.15
 BORDER_PENALTY_WEIGHT = 1
+LOG_FILE = "log.json"
 
 DIRS = np.array([[-1,0],[0,1],[1,0],[0,-1]], dtype=np.int64)
 OPP = np.array([2,3,0,1], dtype=np.int64)
@@ -142,13 +144,63 @@ def propose_move_numba(board_p, board_r):
 def save_board_csv(board_p, board_r, score):
     os.makedirs("solutions", exist_ok=True)  # Crée le dossier s'il n'existe pas
     filename = f"solutions/partial_solution_{score}.csv"
-    with open(filename,'w') as f:
+
+    if os.path.exists(filename) or score < 480:
+        return
+
+    with open(filename, 'w') as f:
         for i in range(SIZE):
             for j in range(SIZE):
-                p = board_p[i,j]
-                r = board_r[i,j]
+                p = board_p[i, j]
+                r = board_r[i, j]
                 orientation = ((4 - r) % 4 + 3) % 4
-                f.write(f"{i},{j},{p+1},{orientation}\n")
+                f.write(f"{i},{j},{p + 1},{orientation}\n")
+
+    # Commande sous forme de liste
+    cmd = [
+        "python",
+        "generate.py",
+        "-conf", "data/eternity2/eternity2_256_1.csv",
+        "-hints", f"solutions/partial_solution_{score}.csv"
+    ]
+
+    # Exécution
+    subprocess.run(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+# ==============================
+# Json log
+# ==============================
+def log(seed, current_score, step, start_time, global_best):
+
+    elapsed = time.time() - start_time
+    steps_per_sec = step / elapsed if elapsed > 0 else 0
+
+    entry = {
+        "seed": seed,
+        "current_score": current_score,
+        "best_score": global_best['score'],
+        "best_seed": global_best['seed'],
+        "step": step,
+        "steps_per_sec": steps_per_sec,
+        "elapsed_time": elapsed
+    }
+
+    # Crée le fichier si nécessaire et ajoute l'entrée
+    if os.path.exists(LOG_FILE):
+        with open(LOG_FILE, "r+", encoding="utf-8") as f:
+            try:
+                data = json.load(f)
+            except json.JSONDecodeError:
+                data = []
+            data.append(entry)
+            f.seek(0)
+            json.dump(data, f, indent=2)
+            f.truncate()
+    else:
+        with open(LOG_FILE, "w", encoding="utf-8") as f:
+            json.dump([entry], f, indent=2)
+
 
 # ==============================
 # Simulated Annealing
@@ -207,7 +259,8 @@ def simulated_annealing_csv(seed, t_rot, N, global_best, global_lock):
                             f"BEST SEED {seed:<2} | STEP {step:<7} | {steps_per_sec:>7.2f} steps/sec | "
                             f"TIME {elapsed:>7.1f}s |{C.RESET}"
                         )
-                        print(console_log)
+                        log(seed, current_score, step, start_time, global_best)
+                        # print(console_log)
 
         else:
             steps_without_improv += 1
@@ -219,7 +272,7 @@ def simulated_annealing_csv(seed, t_rot, N, global_best, global_lock):
             rand_factor = np.random.rand() # uniforme entre 0 et 1
             T = max(BOOST_MAX * rand_factor, BOOST_MIN)
             steps_without_improv = 0
-            print(f"{C.BOLD}{C.YELLOW}| SEED {seed:<2} | TEMPERATURE BOOSTED TO {T:.4f} |{C.RESET}")
+            # print(f"{C.BOLD}{C.YELLOW}| SEED {seed:<2} | TEMPERATURE BOOSTED TO {T:.4f} |{C.RESET}")
             save_board_csv(best_p, best_r, seed)
 
         if best_score == max_possible_score:
