@@ -7,6 +7,7 @@ app = Flask(__name__)
 server = app
 
 IMG_FOLDER = "img"
+os.makedirs(IMG_FOLDER, exist_ok=True)
 LOG_FILE = "log.json"
 
 HTML_TEMPLATE = """
@@ -281,13 +282,19 @@ def hash_log(entries):
 @app.route("/")
 def index():
     top_solutions = get_top_solutions()
-    files = sorted([f for f in os.listdir(IMG_FOLDER) if f.endswith(".jpg")])
+    files = []
+    if os.path.isdir(IMG_FOLDER):
+        files = sorted(f for f in os.listdir(IMG_FOLDER) if f.endswith(".jpg"))
+
     log_entries = read_log()
     return render_template_string(HTML_TEMPLATE, solutions=top_solutions, current_files=files, log_entries=log_entries)
 
 @app.route("/file_list")
 def file_list():
-    files = sorted([f for f in os.listdir(IMG_FOLDER) if f.endswith(".jpg")])
+    files = []
+    if os.path.isdir(IMG_FOLDER):
+        files = sorted(f for f in os.listdir(IMG_FOLDER) if f.endswith(".jpg"))
+
     return jsonify({"files": files})
 
 @app.route("/log_data")
